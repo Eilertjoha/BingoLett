@@ -38,6 +38,26 @@ const EmojiButton: React.FC<{ emojiConfig: EmojiConfig }> = ({ emojiConfig }) =>
   };
 
   useEffect(() => {
+    if (!emojiConfig.url) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      return;
+    }
+
+    const audio = new Audio(emojiConfig.url);
+    audio.preload = 'auto';
+    audio.load();
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audioRef.current = null;
+    };
+  }, [emojiConfig.url]);
+
+  useEffect(() => {
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
       if (audioRef.current) {
@@ -54,15 +74,15 @@ const EmojiButton: React.FC<{ emojiConfig: EmojiConfig }> = ({ emojiConfig }) =>
       setIsPlaying(false);
       setProgress(0);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    } else if (emojiConfig.url) {
-      const audio = new Audio(emojiConfig.url);
-      audioRef.current = audio;
-      
+    } else if (audioRef.current) {
+      const audio = audioRef.current;
+      audio.currentTime = 0;
+
       audio.onplay = () => {
         setIsPlaying(true);
         frameRef.current = requestAnimationFrame(updateProgress);
       };
-      
+
       audio.onended = () => {
         setIsPlaying(false);
         setProgress(0);
