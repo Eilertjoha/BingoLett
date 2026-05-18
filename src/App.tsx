@@ -19,6 +19,13 @@ export default function App() {
       setIsAuthenticated(true);
     }
     
+    // Preload ball skins to prevent flickering
+    const letters = ['B', 'I', 'N', 'G', 'O'];
+    letters.forEach(letter => {
+      const img = new Image();
+      img.src = `${import.meta.env.BASE_URL}glass_orb_${letter}.webp`;
+    });
+    
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
