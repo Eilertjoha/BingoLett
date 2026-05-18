@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from './supabase';
 
 export const getBingoInfo = (num: number) => {
   if (num >= 1 && num <= 15) return { letter: 'B', color: 'cyan' };
@@ -53,6 +54,44 @@ export function useBingoSync(role: 'admin' | 'obs') {
     };
   }, [role]);
 
+  useEffect(() => {
+    if (!supabase) return;
+
+    const loadRemoteState = async () => {
+      const { data, error } = await supabase
+        .from('bingo_state')
+        .select('drawn_numbers')
+        .eq('id', 'main')
+        .single();
+
+      if (!error && data && Array.isArray(data.drawn_numbers)) {
+        setDrawnNumbers(data.drawn_numbers);
+      }
+    };
+
+    loadRemoteState();
+    const pollId = window.setInterval(loadRemoteState, 2000);
+
+    const channel = supabase
+      .channel('bingo_state_updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bingo_state' },
+        (payload: any) => {
+          const next = payload?.new?.drawn_numbers;
+          if (Array.isArray(next)) {
+            setDrawnNumbers(next);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.clearInterval(pollId);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const drawNumber = (manualNum?: number | any) => {
     if (role !== 'admin') return;
     const current = stateRef.current;
@@ -74,6 +113,15 @@ export function useBingoSync(role: 'admin' | 'obs') {
     
     setDrawnNumbers(newState);
     channelRef.current?.postMessage({ type: 'UPDATE', payload: newState });
+    if (supabase) {
+      supabase.from('bingo_state').upsert(
+        {
+          id: 'main',
+          drawn_numbers: newState
+        },
+        { onConflict: 'id' }
+      ).then(() => {}).catch(() => {});
+    }
   };
 
   const resetGame = () => {
@@ -82,6 +130,15 @@ export function useBingoSync(role: 'admin' | 'obs') {
     
     setDrawnNumbers([]);
     channelRef.current?.postMessage({ type: 'UPDATE', payload: [] });
+    if (supabase) {
+      supabase.from('bingo_state').upsert(
+        {
+          id: 'main',
+          drawn_numbers: []
+        },
+        { onConflict: 'id' }
+      ).then(() => {}).catch(() => {});
+    }
   };
 
   return { drawnNumbers, nextNumber, drawNumber, resetGame };
