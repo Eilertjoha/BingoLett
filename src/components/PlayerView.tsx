@@ -157,7 +157,7 @@ export default function PlayerView() {
   }
 
   return (
-    <div className="min-h-screen bg-[#05060f] text-gray-100 p-3 sm:p-4">
+    <div className="min-h-screen bg-[#050505] text-gray-100 p-3 sm:p-4">
       <div className="max-w-md mx-auto flex flex-col gap-3">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between">
           <div className="min-w-0">
@@ -170,9 +170,9 @@ export default function PlayerView() {
         </div>
 
         <div className="grid grid-cols-[1fr_1fr] gap-3">
-          <div className="rounded-3xl border border-fuchsia-400/40 bg-[#0a0b17] p-3 shadow-[0_0_30px_rgba(217,70,239,0.25)]">
+          <div className="rounded-3xl border border-pink-400/40 bg-[#090b14] p-3 shadow-[0_0_30px_rgba(236,72,153,0.25)]">
             <p className="text-xs text-gray-400 mb-2">Siste ball</p>
-            <div className="h-36 rounded-full border-4 border-fuchsia-400/70 bg-black flex items-center justify-center text-6xl font-black">
+            <div className="h-36 rounded-full border-4 border-pink-400/70 bg-black flex items-center justify-center text-6xl font-black">
               {lastDrawn ?? '-'}
             </div>
             <div className="mt-2 text-center text-sm font-bold text-cyan-300">{lastDrawnLabel}</div>
@@ -209,7 +209,7 @@ export default function PlayerView() {
                   key={idx}
                   className={`aspect-square rounded-2xl border flex items-center justify-center text-2xl font-medium ${
                     isMarked
-                      ? 'bg-fuchsia-500/25 border-fuchsia-300/70 text-white shadow-[0_0_14px_rgba(217,70,239,0.45)]'
+                      ? 'bg-pink-500/25 border-pink-300/70 text-white shadow-[0_0_14px_rgba(236,72,153,0.45)]'
                       : 'bg-[#0b0d1f] border-white/10 text-gray-200'
                   }`}
                 >
@@ -220,7 +220,7 @@ export default function PlayerView() {
           </div>
         </div>
 
-        <button className="h-14 rounded-2xl bg-gradient-to-r from-cyan-500/25 to-fuchsia-500/25 border border-cyan-300/40 text-cyan-300 font-black tracking-wide">
+        <button className="h-14 rounded-2xl bg-gradient-to-r from-cyan-500/25 to-purple-500/25 border border-cyan-300/40 text-cyan-300 font-black tracking-wide">
           AUTO PICK ALL
         </button>
       </div>
