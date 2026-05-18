@@ -89,7 +89,7 @@ const EmojiButton: React.FC<{ emojiConfig: EmojiConfig }> = ({ emojiConfig }) =>
       className={`rounded-xl flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 aspect-square ${!isPlaying ? 'bg-white/5 hover:bg-white/10 border border-white/10' : 'border'}`}
       title={`Lydeffekt ${emojiConfig.id}${emojiConfig.url ? ` (${emojiConfig.url})` : ''}`}
     >
-      <span style={{ fontSize: 'min(60cqw, 60cqh)' }}>{emojiConfig.emoji}</span>
+      <span style={{ fontSize: 'min(42cqw, 42cqh)' }}>{emojiConfig.emoji}</span>
     </button>
   );
 }
@@ -103,7 +103,16 @@ const initialEmojis: EmojiConfig[] = [
   { id: '6', emoji: '💩', url: '' },
   { id: '7', emoji: '😎', url: '' },
   { id: '8', emoji: '🔥', url: '' },
+  { id: '9', emoji: '??', url: '' },
+  { id: '10', emoji: '??', url: '' },
+  { id: '11', emoji: '?', url: '' },
+  { id: '12', emoji: '??', url: '' },
 ];
+
+const ensureEmojiSlots = (list: EmojiConfig[]): EmojiConfig[] => {
+  const byId = new Map(list.map((item) => [item.id, item]));
+  return initialEmojis.map((fallback) => byId.get(fallback.id) ?? fallback);
+};
 
 export default function AdminView() {
   const { drawnNumbers, nextNumber, drawNumber, resetGame } = useBingoSync('admin');
@@ -182,8 +191,9 @@ export default function AdminView() {
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
-            setEmojis(parsed);
-            setTempEmojis(parsed);
+            const merged = ensureEmojiSlots(parsed);
+            setEmojis(merged);
+            setTempEmojis(merged);
           } catch {}
         }
         return;
@@ -195,11 +205,12 @@ export default function AdminView() {
         .order('emoji_id', { ascending: true });
 
       if (data && data.length > 0 && !error) {
-        const loaded: EmojiConfig[] = data.map(d => ({
+        const loadedRaw: EmojiConfig[] = data.map(d => ({
           id: d.emoji_id,
           emoji: d.emoji,
           url: d.url
         }));
+        const loaded = ensureEmojiSlots(loadedRaw);
         setEmojis(loaded);
         setTempEmojis(loaded);
         setIsDbReady(true);
@@ -209,8 +220,9 @@ export default function AdminView() {
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
-            setEmojis(parsed);
-            setTempEmojis(parsed);
+            const merged = ensureEmojiSlots(parsed);
+            setEmojis(merged);
+            setTempEmojis(merged);
           } catch {}
         }
       }
@@ -369,6 +381,13 @@ export default function AdminView() {
           {/* Header Actions */}
           <div className="flex justify-end items-center px-2 shrink-0 h-14 lg:h-16">
             <div className="flex gap-2">
+              <button
+                disabled
+                className="bg-white/10 border border-white/20 py-1.5 px-4 rounded-xl font-bold text-sm transition-all text-white shadow-sm disabled:opacity-50 disabled:grayscale cursor-not-allowed"
+                title="Kommer snart"
+              >
+                ONLINE
+              </button>
               <button 
                 onClick={resetGame}
                 className="bg-white/10 hover:bg-white/20 border border-white/20 py-1.5 px-4 rounded-xl font-bold text-sm transition-all text-white shadow-sm"
@@ -396,36 +415,38 @@ export default function AdminView() {
             </div>
           </div>
           
-          <div className="flex flex-col gap-4 flex-1 h-full min-h-0">
-            {/* Emoji Buttons Row */}
-            <div className="grid grid-cols-8 gap-2 md:gap-4 flex-1 content-center">
-              {emojis.map((emojiConfig) => (
-                <EmojiButton key={emojiConfig.id} emojiConfig={emojiConfig} />
-              ))}
+          <div className="flex gap-4 flex-1 h-full min-h-0 items-stretch">
+            <div className="w-1/2 flex flex-col gap-4 min-h-0">
+              <div className="grid grid-cols-4 grid-rows-3 gap-2 md:gap-2.5 shrink-0 self-end w-full max-w-[420px]">
+                {emojis.map((emojiConfig) => (
+                  <EmojiButton key={emojiConfig.id} emojiConfig={emojiConfig} />
+                ))}
+              </div>
             </div>
 
-            <div className="flex gap-4 flex-1 min-h-[100px]">
+            <div className="w-1/2 flex flex-col gap-4 min-h-0">
               <button 
                 onClick={() => setIsManualMode(!isManualMode)}
                 disabled={drawnNumbers.length >= 75}
-                className={`w-1/2 group relative overflow-hidden rounded-[40px] p-1 transition-all disabled:opacity-50 disabled:grayscale ${isManualMode ? 'bg-gradient-to-r from-pink-500 to-orange-500 shadow-[0_10px_30px_rgba(236,72,153,0.3)]' : 'bg-white/10 hover:bg-white/20 border border-white/10'}`}
+                className={`group relative overflow-hidden rounded-[40px] p-1 disabled:opacity-50 disabled:grayscale transition-all h-[140px] ${isManualMode ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 shadow-[0_10px_30px_rgba(217,70,239,0.35)]' : 'bg-white/10 hover:bg-white/20 border border-white/10'}`}
               >
                 <div className={`w-full h-full transition-all flex flex-col items-center justify-center rounded-[38px] p-4 text-center ${isManualMode ? 'bg-black/20 group-hover:bg-transparent' : 'bg-transparent'}`}>
-                  <span className={`text-4xl lg:text-5xl xl:text-6xl font-black uppercase tracking-tighter ${isManualMode ? 'text-white drop-shadow-md' : 'text-white/50 group-hover:text-white/80'}`}>
+                  <span className={`text-3xl lg:text-4xl xl:text-5xl font-black uppercase tracking-tighter ${isManualMode ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}>
                     Manuell
                   </span>
                 </div>
               </button>
+
               <button 
                 onClick={() => {
                   setIsManualMode(false);
                   drawNumber();
                 }}
-                disabled={drawnNumbers.length >= 75}
-                className="w-1/2 group relative overflow-hidden rounded-[40px] bg-gradient-to-r from-cyan-600 to-purple-600 p-1 shadow-[0_10px_30px_rgba(139,92,246,0.3)] disabled:opacity-50 disabled:grayscale transition-all"
-              >
+                  disabled={drawnNumbers.length >= 75}
+                className="group relative overflow-hidden rounded-[40px] bg-gradient-to-r from-cyan-600 to-purple-600 p-1 shadow-[0_10px_30px_rgba(139,92,246,0.3)] disabled:opacity-50 disabled:grayscale transition-all h-[140px]"
+                >
                 <div className="w-full h-full bg-black/40 group-hover:bg-transparent transition-all flex flex-col items-center justify-center rounded-[38px] p-4 text-center">
-                  <span className="text-4xl lg:text-5xl xl:text-6xl font-black text-white uppercase tracking-tighter">
+                  <span className="text-3xl lg:text-4xl xl:text-5xl font-black text-white uppercase tracking-tighter">
                     Trekk
                   </span>
                 </div>
