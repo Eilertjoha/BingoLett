@@ -96,20 +96,37 @@ const EmojiButton: React.FC<{ emojiConfig: EmojiConfig }> = ({ emojiConfig }) =>
   };
 
   const intensity = isPlaying ? Math.max(0, 1 - progress) : 0;
+  const fillPercent = Math.max(0, Math.min(100, intensity * 100));
 
   return (
     <button 
       onClick={handleClick}
       style={{ 
         containerType: 'size',
-        boxShadow: isPlaying ? `0 0 ${20 + intensity * 40}px rgba(236,72,153,${intensity * 0.8})` : undefined,
-        backgroundColor: isPlaying ? `rgba(236,72,153,${intensity * 0.3})` : undefined,
+        boxShadow: isPlaying ? `0 0 ${14 + intensity * 28}px rgba(217,70,239,${0.25 + intensity * 0.45})` : undefined,
         borderColor: isPlaying ? `rgba(236,72,153,${intensity * 0.5})` : undefined
       }}
-      className={`rounded-xl flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 aspect-square ${!isPlaying ? 'bg-white/5 hover:bg-white/10 border border-white/10' : 'border'}`}
+      className={`relative overflow-hidden rounded-xl flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 aspect-square border ${!isPlaying ? 'bg-white/5 hover:bg-white/10 border-white/10' : ''}`}
       title={`Lydeffekt ${emojiConfig.id}${emojiConfig.url ? ` (${emojiConfig.url})` : ''}`}
     >
-      <span style={{ fontSize: 'min(42cqw, 42cqh)' }}>{emojiConfig.emoji}</span>
+      <div
+        className="absolute inset-x-0 bottom-0 transition-[height] duration-100 ease-linear"
+        style={{
+          height: `${fillPercent}%`,
+          background: 'linear-gradient(180deg, rgba(236,72,153,0.95) 0%, rgba(59,130,246,0.9) 100%)'
+        }}
+      />
+      <div
+        className="absolute inset-x-0 transition-[height] duration-100 ease-linear"
+        style={{
+          bottom: `${fillPercent}%`,
+          height: '3px',
+          opacity: isPlaying ? 0.9 : 0,
+          background: 'rgba(255,255,255,0.7)',
+          boxShadow: '0 0 10px rgba(255,255,255,0.6)'
+        }}
+      />
+      <span className="relative z-10" style={{ fontSize: 'min(42cqw, 42cqh)' }}>{emojiConfig.emoji}</span>
     </button>
   );
 }
