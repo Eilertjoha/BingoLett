@@ -82,7 +82,7 @@ export default function Ball3D({ number, size = 'lg' }: { number: number | null,
         boxShadow: `0 0 ${size === 'lg' || size === 'xl' || size === 'fill' ? '60px' : '30px'} ${glowColor}`,
         containerType: 'size'
       }}
-      className={`relative flex items-center justify-center rounded-full shrink-0 border-[3px] sm:border-[5px] ${borderColor} ${containerClasses} bg-gradient-to-br from-gray-800 via-[#111] to-black`}
+      className={`relative flex items-center justify-center rounded-full overflow-hidden shrink-0 border-[3px] sm:border-[5px] ${borderColor} ${containerClasses} bg-gradient-to-br from-gray-800 via-[#111] to-black`}
     >
       <div 
         className="absolute inset-0 rounded-full border border-white/20 pointer-events-none"
@@ -93,6 +93,7 @@ export default function Ball3D({ number, size = 'lg' }: { number: number | null,
         src={`${import.meta.env.BASE_URL}glass_orb_${letter}.webp`} 
         alt={`${letter} skin`}
         className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
+        style={{ transform: 'scale(1.15)' }}
       />
 
       <div className="relative z-10 w-full h-full flex items-center justify-center font-bold tracking-tighter drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
