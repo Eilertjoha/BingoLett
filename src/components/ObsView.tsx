@@ -4,6 +4,7 @@ import { AnimatePresence } from 'motion/react';
 import Ball3D from './Ball3D';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { defaultOnlineConfig, loadOnlineConfig, type OnlineConfig } from '../lib/online';
 
 interface SystemConfig {
   drawSoundUrl: string;
@@ -13,6 +14,7 @@ interface SystemConfig {
 
 export default function ObsView() {
   const { drawnNumbers } = useBingoSync('obs');
+  const [onlineConfig, setOnlineConfig] = useState<OnlineConfig>(defaultOnlineConfig);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     drawSoundUrl: '',
     logoUrl: '',
@@ -55,9 +57,20 @@ export default function ObsView() {
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
+
+  useEffect(() => {
+    const loadOnline = () => {
+      loadOnlineConfig().then(setOnlineConfig).catch(() => {});
+    };
+    loadOnline();
+    window.addEventListener('storage', loadOnline);
+    return () => window.removeEventListener('storage', loadOnline);
+  }, []);
   
   const lastDrawn = drawnNumbers.length > 0 ? drawnNumbers[drawnNumbers.length - 1] : null;
   const recentDrawn = [...drawnNumbers].reverse().slice(1, 4); // Siste 3
+  const playerUrl = `${window.location.origin}${window.location.pathname}#player?pin=${encodeURIComponent(onlineConfig.pin || '')}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(playerUrl)}`;
 
   return (
     <div className="min-h-screen bg-[#07070a] text-gray-100 flex flex-col p-2 sm:p-4 lg:p-6 overflow-hidden">
@@ -112,7 +125,13 @@ export default function ObsView() {
           </div>
           
           {/* Top Right: Logo Area */}
-          <div className="hidden lg:flex flex-1 justify-end items-center h-full">
+          <div className="hidden lg:flex flex-1 justify-end items-center h-full gap-4">
+            {onlineConfig.enabled && onlineConfig.pin ? (
+              <div className="h-full aspect-square bg-white rounded-2xl p-3 flex flex-col items-center justify-center">
+                <img src={qrUrl} alt="Player QR" className="w-full h-full object-contain rounded-xl" />
+                <p className="text-black text-[10px] font-bold mt-2">PIN: {onlineConfig.pin}</p>
+              </div>
+            ) : null}
             {systemConfig.logoUrl ? (
               <div className="h-full aspect-square flex items-center justify-center">
                 <img src={systemConfig.logoUrl} alt="Logo" className="w-full h-full object-contain" />

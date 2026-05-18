@@ -5,6 +5,7 @@ import BingoBall from './BingoBall';
 import Ball3D from './Ball3D';
 import HistoryGrid from './HistoryGrid';
 import { supabase } from '../lib/supabase';
+import { defaultOnlineConfig, loadOnlineConfig, saveOnlineConfig, type OnlineConfig } from '../lib/online';
 
 interface EmojiConfig {
   id: string;
@@ -155,6 +156,7 @@ export default function AdminView() {
   const { drawnNumbers, nextNumber, drawNumber, resetGame } = useBingoSync('admin');
   const [isManualMode, setIsManualMode] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOnlineModalOpen, setIsOnlineModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<'emoji' | 'system'>('emoji');
   
   const [emojis, setEmojis] = useState<EmojiConfig[]>(initialEmojis);
@@ -164,6 +166,8 @@ export default function AdminView() {
   const [isDbReady, setIsDbReady] = useState(false);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [uploadingSystemKey, setUploadingSystemKey] = useState<keyof SystemConfig | null>(null);
+  const [onlineConfig, setOnlineConfig] = useState<OnlineConfig>(defaultOnlineConfig);
+  const [tempOnlinePin, setTempOnlinePin] = useState('');
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, index?: number, systemKey?: keyof SystemConfig) => {
     const file = event.target.files?.[0];
@@ -222,6 +226,10 @@ export default function AdminView() {
 
     // 1. Prøv å hente fra Supabase
     async function loadEmojis() {
+      const online = await loadOnlineConfig();
+      setOnlineConfig(online);
+      setTempOnlinePin(online.pin || '');
+
       if (!supabase) {
         // Fallback til localStorage hvis Supabase ikke er konfigurert
         const saved = localStorage.getItem('bingo-emojis');
@@ -419,11 +427,13 @@ export default function AdminView() {
           <div className="flex justify-end items-center px-2 shrink-0 h-14 lg:h-16">
             <div className="flex gap-2">
               <button
-                disabled
-                className="bg-white/10 border border-white/20 py-1.5 px-4 rounded-xl font-bold text-sm transition-all text-white shadow-sm disabled:opacity-50 disabled:grayscale cursor-not-allowed"
-                title="Kommer snart"
+                onClick={() => {
+                  setTempOnlinePin(onlineConfig.pin || '');
+                  setIsOnlineModalOpen(true);
+                }}
+                className={`py-1.5 px-4 rounded-xl font-bold text-sm transition-all text-white shadow-sm border ${onlineConfig.enabled ? 'bg-emerald-500/20 border-emerald-400/40 hover:bg-emerald-500/30' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}
               >
-                ONLINE
+                ONLINE {onlineConfig.enabled ? 'PÅ' : 'AV'}
               </button>
               <button 
                 onClick={resetGame}
@@ -499,6 +509,61 @@ export default function AdminView() {
       </div>
 
       {/* Settings Sidebar */}
+      {isOnlineModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOnlineModalOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-6 flex flex-col gap-4 shadow-2xl">
+            <h3 className="text-xl font-bold uppercase tracking-wider text-white">Online Spill</h3>
+            <p className="text-sm text-gray-400">
+              Skriv inn game pin som spillere bruker ved innlogging.
+            </p>
+            <input
+              type="text"
+              value={tempOnlinePin}
+              onChange={(e) => setTempOnlinePin(e.target.value.replace(/\s+/g, '').slice(0, 12))}
+              placeholder="F.eks. 2468"
+              className="w-full bg-black/50 border border-white/20 rounded-lg h-11 px-3 text-sm focus:outline-none focus:border-purple-500 placeholder:text-gray-600 text-gray-300"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsOnlineModalOpen(false)}
+                className="flex-1 h-11 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-bold transition-all"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={() => {
+                  const pin = tempOnlinePin.trim();
+                  if (!pin) return;
+                  saveOnlineConfig({ enabled: true, pin });
+                  setOnlineConfig({ enabled: true, pin });
+                  setIsOnlineModalOpen(false);
+                }}
+                disabled={!tempOnlinePin.trim()}
+                className="flex-1 h-11 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-50 rounded-lg text-sm font-bold transition-all"
+              >
+                Start Online
+              </button>
+            </div>
+            {onlineConfig.enabled && (
+              <button
+                onClick={() => {
+                  saveOnlineConfig({ enabled: false, pin: onlineConfig.pin });
+                  setOnlineConfig({ enabled: false, pin: onlineConfig.pin });
+                  setIsOnlineModalOpen(false);
+                }}
+                className="h-11 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 rounded-lg text-sm font-bold text-red-200 transition-all"
+              >
+                Stopp Online Spill
+              </button>
+            )}
+            {onlineConfig.enabled && (
+              <p className="text-xs text-emerald-300">Aktiv pin: {onlineConfig.pin}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div 

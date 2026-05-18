@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import AdminView from './components/AdminView';
 import ObsView from './components/ObsView';
+import PlayerView from './components/PlayerView';
 import { Lock } from 'lucide-react';
 
 export default function App() {
   const [isObs, setIsObs] = useState(window.location.hash === '#obs');
+  const [isPlayer, setIsPlayer] = useState(window.location.hash.startsWith('#player'));
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [error, setError] = useState(false);
@@ -12,6 +14,7 @@ export default function App() {
   useEffect(() => {
     const onHashChange = () => {
       setIsObs(window.location.hash === '#obs');
+      setIsPlayer(window.location.hash.startsWith('#player'));
     };
     
     // Check if already authenticated in this session
@@ -46,6 +49,9 @@ export default function App() {
 
   if (isObs) {
     return <ObsView />;
+  }
+  if (isPlayer) {
+    return <PlayerView />;
   }
 
   if (!isAuthenticated) {
