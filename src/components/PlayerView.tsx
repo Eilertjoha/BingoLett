@@ -52,6 +52,39 @@ export default function PlayerView() {
     return `${session.name} • Bong #${session.cardId}`;
   }, [session]);
 
+  const buildCardNumbers = (seed: number) => {
+    const pickUnique = (from: number, to: number, count: number, s: number) => {
+      const nums = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+      let rand = s * 9973;
+      const out: number[] = [];
+      while (out.length < count && nums.length > 0) {
+        rand = (rand * 1664525 + 1013904223) % 4294967296;
+        const idx = rand % nums.length;
+        out.push(nums[idx]);
+        nums.splice(idx, 1);
+      }
+      return out.sort((a, b) => a - b);
+    };
+
+    const b = pickUnique(1, 15, 5, seed + 1);
+    const i = pickUnique(16, 30, 5, seed + 2);
+    const n = pickUnique(31, 45, 5, seed + 3);
+    const g = pickUnique(46, 60, 5, seed + 4);
+    const o = pickUnique(61, 75, 5, seed + 5);
+
+    const rows: Array<Array<number | 'FREE'>> = Array.from({ length: 5 }, (_, r) => [
+      b[r],
+      i[r],
+      r === 2 ? 'FREE' : n[r],
+      g[r],
+      o[r]
+    ]);
+    return rows;
+  };
+
+  const cardRows = useMemo(() => (session ? buildCardNumbers(session.cardId) : []), [session]);
+  const recent = useMemo(() => [...drawnNumbers].reverse().slice(1, 4), [drawnNumbers]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -124,38 +157,72 @@ export default function PlayerView() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07070a] text-gray-100 p-4 sm:p-6">
-      <div className="max-w-3xl mx-auto flex flex-col gap-4">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-400">Innlogget</p>
-            <p className="font-bold">{joinedLabel}</p>
+    <div className="min-h-screen bg-[#05060f] text-gray-100 p-3 sm:p-4">
+      <div className="max-w-md mx-auto flex flex-col gap-3">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-400">Online Bingo</p>
+            <p className="font-bold truncate">{joinedLabel}</p>
           </div>
-          <button onClick={logout} className="px-3 py-2 text-sm rounded-lg bg-white/10 hover:bg-white/20 border border-white/20">
+          <button onClick={logout} className="px-3 py-2 text-xs rounded-lg bg-white/10 hover:bg-white/20 border border-white/20">
             Logg ut
           </button>
         </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Siste trekk</p>
-            <p className="text-4xl font-black">{lastDrawnLabel}</p>
+
+        <div className="grid grid-cols-[1fr_1fr] gap-3">
+          <div className="rounded-3xl border border-fuchsia-400/40 bg-[#0a0b17] p-3 shadow-[0_0_30px_rgba(217,70,239,0.25)]">
+            <p className="text-xs text-gray-400 mb-2">Siste ball</p>
+            <div className="h-36 rounded-full border-4 border-fuchsia-400/70 bg-black flex items-center justify-center text-6xl font-black">
+              {lastDrawn ?? '-'}
+            </div>
+            <div className="mt-2 text-center text-sm font-bold text-cyan-300">{lastDrawnLabel}</div>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Antall trukket</p>
-            <p className="text-4xl font-black">{totalDrawn}/75</p>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-3">
+            <p className="text-xs text-gray-400">Status</p>
+            <p className="font-black text-emerald-300 mb-2">RUNNING</p>
+            <p className="text-xs text-gray-400">Balls left</p>
+            <p className="font-black text-white mb-3">{75 - totalDrawn}</p>
+            <div className="flex gap-2">
+              {recent.map((n) => (
+                <span key={n} className="w-10 h-10 rounded-full border border-cyan-400/60 text-sm flex items-center justify-center bg-black/50">
+                  {getBingoInfo(n).letter}{n}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-          <p className="text-sm text-gray-400 mb-2">Trukne tall</p>
-          <div className="flex flex-wrap gap-2">
-            {drawnNumbers.length === 0 ? <span className="text-gray-500">Ingen tall trukket enda.</span> : null}
-            {drawnNumbers.map((num) => (
-              <span key={num} className="px-2 py-1 rounded-md bg-white/10 border border-white/15 text-sm font-bold">
-                {getBingoInfo(num).letter}{num}
-              </span>
-            ))}
+
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-3">
+          <div className="grid grid-cols-5 gap-2 mb-2 text-center font-black text-4xl leading-none">
+            <span className="text-cyan-400">B</span>
+            <span className="text-fuchsia-400">I</span>
+            <span className="text-emerald-400">N</span>
+            <span className="text-purple-400">G</span>
+            <span className="text-yellow-300">O</span>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {cardRows.flat().map((cell, idx) => {
+              const isFree = cell === 'FREE';
+              const isMarked = isFree || (typeof cell === 'number' && drawnNumbers.includes(cell));
+              return (
+                <div
+                  key={idx}
+                  className={`aspect-square rounded-2xl border flex items-center justify-center text-2xl font-medium ${
+                    isMarked
+                      ? 'bg-fuchsia-500/25 border-fuchsia-300/70 text-white shadow-[0_0_14px_rgba(217,70,239,0.45)]'
+                      : 'bg-[#0b0d1f] border-white/10 text-gray-200'
+                  }`}
+                >
+                  {isFree ? '★' : cell}
+                </div>
+              );
+            })}
           </div>
         </div>
+
+        <button className="h-14 rounded-2xl bg-gradient-to-r from-cyan-500/25 to-fuchsia-500/25 border border-cyan-300/40 text-cyan-300 font-black tracking-wide">
+          AUTO PICK ALL
+        </button>
       </div>
     </div>
   );
