@@ -1,0 +1,6 @@
+{
+  "name": "Bingo Lett",
+  "description": "En enkel og rask offline bingo-app med OBS-støtte. Får jobben gjort rett i nettleseren.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
